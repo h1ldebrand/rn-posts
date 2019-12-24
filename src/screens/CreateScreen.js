@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     ScrollView,
@@ -16,22 +16,26 @@ import { useDispatch } from 'react-redux'
 import { AppHeaderIcon } from '../components/AppHeaderIcon';
 import { THEME } from '../theme';
 import { addPost } from '../store/actions/post';
+import { PhotoPicker } from '../components/PhotoPicker';
 
 export const CreateScreen = ({ navigation }) => {
     const dispatch = useDispatch()
     const [text, setText] = useState('')
-
-    const img = 'https://static.coindesk.com/wp-content/uploads/2019/01/shutterstock_1012724596-860x430.jpg'
+    const imgRef = useRef()
 
     const saveHandler = () => {
         const post = {
-            img,
+            img: imgRef.current,
             text: text,
             date: new Date().toJSON(),
             booked: false
         }
         dispatch(addPost(post))
         navigation.navigate('Main')
+    }
+
+    const photoHandler = uri => {
+        imgRef.current = uri
     }
 
     return (
@@ -46,11 +50,13 @@ export const CreateScreen = ({ navigation }) => {
                         onChangeText={setText}
                         multiline
                     />
-                    <Image
-                        style={{ width: '100%', height: 200 }}
-                        source={{ uri: img }} 
-                        />
-                    <Button title="Create post" color={THEME.MAIN_COLOR} onPress={saveHandler} />
+                    <PhotoPicker onPick={photoHandler} />
+                    <Button 
+                        title="Create post"
+                        color={THEME.MAIN_COLOR}
+                        onPress={saveHandler}
+                        disabled={!text}
+                    />
                 </View>
             </TouchableWithoutFeedback>
         </ScrollView>
