@@ -1,13 +1,32 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {View, Text, StyleSheet, Image, Button, Alert} from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
+import { useDispatch, useSelector } from 'react-redux'
 
 import { THEME } from '../theme';
 import { AppHeaderIcon } from '../components/AppHeaderIcon';
+import { toggleBooked, removePost } from '../store/actions/post'
 
 export const PostScreen = ({navigation}) => {
-    const post = navigation.getParam('post');
+    const postId = navigation.getParam('post').id;
+    const post = useSelector(state => state.post.allPosts.find(p => p.id === postId))
+    const dispatch = useDispatch()
+
+    const booked = useSelector(state => state.post.bookedPosts.some(post => post.id === postId))
+
+    const toggleHandler = useCallback(() => {
+        console.log(postId)
+        dispatch(toggleBooked(postId))
+    }, [dispatch, postId])
+
+    useEffect(() => {
+        navigation.setParams({toggleHandler})
+    }, [toggleHandler])
+
+    useEffect(() => {
+        navigation.setParams({ booked })
+    }, [booked])
 
     const removeHandler = () => {
         Alert.alert(
@@ -18,10 +37,17 @@ export const PostScreen = ({navigation}) => {
                 text: 'Cancel',
                 style: 'cancel',
               },
-              {text: 'Delete', style: 'destructive', onPress: () => {}},
+              {text: 'Delete', style: 'destructive', onPress: () => {
+                  navigation.navigate('Main')
+                  dispatch(removePost(postId))
+              }},
             ],
             {cancelable: false},
           );
+    }
+
+    if(!post){
+        return null;
     }
 
     return (
@@ -39,8 +65,9 @@ export const PostScreen = ({navigation}) => {
 
 PostScreen.navigationOptions = ({navigation}) => {
     const post = navigation.getParam('post');
+    const toggleHandler = navigation.getParam('toggleHandler')
     const date = post.date;
-    const booked = post.booked;
+    const booked = navigation.getParam('booked')
 
     const iconName = booked ? 'ios-star' : 'ios-star-outline'
 
@@ -51,7 +78,7 @@ PostScreen.navigationOptions = ({navigation}) => {
                 <Item 
                     title="Take photo"
                     iconName={iconName}
-                    onPress={() => console.log('Press photo')}
+                    onPress={toggleHandler}
                 />
             </HeaderButtons>
         )
